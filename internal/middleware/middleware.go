@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"go.uber.org/zap"
+	sugared "github.com/chernyshevuser/gopfermart.git/tools/logger"
 )
 
-func LogMiddleware(next http.HandlerFunc, logger zap.SugaredLogger) http.HandlerFunc {
+func LogMiddleware(next http.HandlerFunc, logger sugared.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow(
 			"entering",
@@ -25,14 +25,14 @@ func LogMiddleware(next http.HandlerFunc, logger zap.SugaredLogger) http.Handler
 	}
 }
 
-func PanicMiddleware(next http.HandlerFunc, logger zap.SugaredLogger) http.HandlerFunc {
+func PanicMiddleware(next http.HandlerFunc, logger sugared.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				logger.Errorw(
 					"panic happened",
 					"reason", err,
-					"stackTrace", string(debug.Stack()),
+					"stacktrace", string(debug.Stack()),
 				)
 
 				w.WriteHeader(http.StatusInternalServerError)
@@ -43,7 +43,7 @@ func PanicMiddleware(next http.HandlerFunc, logger zap.SugaredLogger) http.Handl
 	}
 }
 
-func ErrorMiddleware(next func(http.ResponseWriter, *http.Request) error, logger zap.SugaredLogger) http.HandlerFunc {
+func ErrorMiddleware(next func(http.ResponseWriter, *http.Request) error, logger sugared.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := next(w, r); err != nil {
 			logger.Errorw(
@@ -57,8 +57,8 @@ func ErrorMiddleware(next func(http.ResponseWriter, *http.Request) error, logger
 	}
 }
 
-func Accept(f func(http.ResponseWriter, *http.Request) error, logger zap.SugaredLogger) http.HandlerFunc {
-	middlewares := []func(next http.HandlerFunc, logger zap.SugaredLogger) http.HandlerFunc{
+func Accept(f func(http.ResponseWriter, *http.Request) error, logger sugared.Logger) http.HandlerFunc {
+	middlewares := []func(next http.HandlerFunc, logger sugared.Logger) http.HandlerFunc{
 		PanicMiddleware,
 		LogMiddleware,
 	}
