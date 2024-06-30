@@ -2,7 +2,7 @@ package handler
 
 import "net/http"
 
-type ApiSvc interface {
+type API interface {
 	Register(w http.ResponseWriter, r *http.Request) error
 	Login(w http.ResponseWriter, r *http.Request) error
 	NewOrder(w http.ResponseWriter, r *http.Request) error
