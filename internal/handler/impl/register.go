@@ -1,7 +1,46 @@
 package impl
 
-import "net/http"
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+)
+
+type RegisterReq struct {
+	Login    *string `json:"login,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
 
 func (i *implementation) Register(w http.ResponseWriter, r *http.Request) error {
-	panic("")
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(r.Body); err != nil {
+		return err
+	}
+
+	var req RegisterReq
+	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
+		return err
+	}
+
+	status := http.StatusOK
+
+	if req.Login == nil || req.Password == nil {
+		status = http.StatusBadRequest
+		w.WriteHeader(status)
+		return nil
+	}
+
+	ctx := r.Context()
+
+	ok, err := i.svc.Register(ctx, *req.Login, *req.Password)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		status = http.StatusConflict
+	}
+
+	w.WriteHeader(status)
+	return nil
 }

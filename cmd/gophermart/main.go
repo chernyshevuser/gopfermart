@@ -1,10 +1,16 @@
 package main
 
 import (
-	"github.com/chernyshevuser/gopfermart.git/internal/db/impl"
+	"net/http"
+
+	business "github.com/chernyshevuser/gopfermart.git/internal/business/impl"
+	db "github.com/chernyshevuser/gopfermart.git/internal/db/impl"
+	api "github.com/chernyshevuser/gopfermart.git/internal/handler/impl"
+	"github.com/chernyshevuser/gopfermart.git/internal/router"
 	"github.com/chernyshevuser/gopfermart.git/tools/closer"
 	"github.com/chernyshevuser/gopfermart.git/tools/config"
 	"github.com/chernyshevuser/gopfermart.git/tools/logger"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -13,7 +19,7 @@ func main() {
 
 	config.SetupConfig(logger)
 
-	dbSvc, err := impl.NewDbSvc()
+	dbSvc, err := db.NewDbSvc()
 	if err != nil {
 		logger.Errorw(
 			"cant create db svc",
@@ -23,6 +29,16 @@ func main() {
 	}
 
 	dbSvc.Actualizing()
+
+	businessSvc := business.NewSvc(logger, dbSvc)
+	apiSvc := api.NewImplementation(businessSvc, logger)
+
+	muxRouter := mux.NewRouter()
+	router.SetupRouter(apiSvc, muxRouter, logger)
+
+	if err = http.ListenAndServe(config.RunAddr, muxRouter); err != nil {
+		panic(err)
+	}
 
 	go closer.GracefulShutdown(
 		make(chan struct{}, 1),

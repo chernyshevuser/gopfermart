@@ -1,7 +1,9 @@
 package business
 
+import "context"
+
 type Svc interface {
-	Register() error
+	Register(ctx context.Context, login, password string) (ok bool, err error)
 	Login() error
 	NewOrder() error
 	GetOrders() error
