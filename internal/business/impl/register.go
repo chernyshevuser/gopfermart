@@ -11,6 +11,12 @@ import (
 )
 
 func (g *gophermart) Register(ctx context.Context, login, password string) (ok bool, err error) {
+	_, exists := g.storage.Get(login)
+	if exists {
+		ok = false
+		return
+	}
+
 	encryptedPassword, err := utils.Encrypt(password)
 	if err != nil {
 		g.logger.Errorw(
@@ -35,6 +41,14 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (ok b
 		ok = true
 		if exists {
 			ok = false
+
+			p, err := query.GetUserPassword(ctx, tx, login)
+			if err != nil {
+				return err
+			}
+
+			g.storage.Set(login, p)
+
 			return nil
 		}
 
