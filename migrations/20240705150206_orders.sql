@@ -1,13 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE public.Users (
+CREATE TABLE public.Orders (
     login TEXT PRIMARY KEY,
-    balance NUMERIC,
-    password TEXT
+    finalizedOrders JSONB,
+    notFinalizedOrders JSONB
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE public.Users;
+DROP TABLE public.Orders;
 -- +goose StatementEnd

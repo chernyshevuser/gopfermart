@@ -4,6 +4,7 @@ import (
 	"sync"
 )
 
+// Storage is default template storage
 type Storage[T any] struct {
 	data map[string]T
 	mu   *sync.Mutex

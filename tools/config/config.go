@@ -13,6 +13,7 @@ const (
 	DatabaseUriEnv       = configKey("DATABASE_URI")
 	AccrualSystemAddrEnv = configKey("ACCRUAL_SYSTEM_ADDRESS")
 	CryptoKeyEnv         = configKey("CRYPTO_KEY")
+	JwtSecretKeyEnv      = configKey("JWT_KEY")
 )
 
 var (
@@ -20,6 +21,7 @@ var (
 	DatabaseUri       string
 	AccrualSystemAddr string
 	CryptoKey         string
+	JwtSecretKey      string
 )
 
 func SetupConfig(logger logger.Logger) {
@@ -27,6 +29,7 @@ func SetupConfig(logger logger.Logger) {
 	flag.StringVar(&DatabaseUri, "d", "", "dbUri")
 	flag.StringVar(&AccrualSystemAddr, "r", "", "accrual system addr")
 	flag.StringVar(&CryptoKey, "k", "examplekey123456", "crypto key")
+	flag.StringVar(&JwtSecretKey, "j", "examplekey123456", "jwt crypto key")
 
 	flag.Parse()
 
@@ -70,11 +73,22 @@ func SetupConfig(logger logger.Logger) {
 		CryptoKey = cryptoKey
 	}
 
+	jwtSecretKey, err := GetConfigString(JwtSecretKeyEnv)
+	if err != nil {
+		logger.Errorw(
+			"can't get env",
+			"msg", err,
+		)
+	} else {
+		JwtSecretKey = jwtSecretKey
+	}
+
 	logger.Infow(
 		"config",
 		"runAddr", RunAddr,
 		"dbUri", DatabaseUri,
 		"accrual system addr", AccrualSystemAddr,
 		"crypto key", CryptoKey,
+		"jwt crypto key", JwtSecretKey,
 	)
 }

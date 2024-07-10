@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 type RegisterReq struct {
@@ -32,13 +33,19 @@ func (i *implementation) Register(w http.ResponseWriter, r *http.Request) error 
 
 	ctx := r.Context()
 
-	ok, err := i.svc.Register(ctx, *req.Login, *req.Password)
+	ok, sessionToken, err := i.svc.Register(ctx, *req.Login, *req.Password)
 	if err != nil {
 		return err
 	}
 
 	if !ok {
 		status = http.StatusConflict
+	} else {
+		http.SetCookie(w, &http.Cookie{
+			Name:    "token",
+			Value:   sessionToken,
+			Expires: time.Now().Add(24 * time.Hour),
+		})
 	}
 
 	w.WriteHeader(status)
