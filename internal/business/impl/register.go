@@ -29,6 +29,8 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (sess
 	}
 	defer tx.Rollback(ctx)
 
+	userAlreadyExists := false
+
 	err = db.SimpleInTx(ctx, tx, func(ctx context.Context, tx pgx.Tx) (err error) {
 		_, err = query.GetEncryptedPassword(ctx, tx, login)
 		if err != nil {
@@ -39,6 +41,7 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (sess
 			return err
 		}
 
+		userAlreadyExists = true
 		return nil
 	})
 	if err != nil {
@@ -47,6 +50,10 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (sess
 
 	if err = tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("failed to commit db tx: %w", err)
+	}
+
+	if userAlreadyExists {
+		return nil, nil
 	}
 
 	token, err := g.sessionSvc.NewToken(login)
