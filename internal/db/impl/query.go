@@ -8,25 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func GetUserPassword(ctx context.Context, trx pgx.Tx, login string) (password string, err error) {
-	q := `
-	SELECT password
-	FROM public.Users
-	WHERE login = $1
-`
-	err = trx.QueryRow(
-		ctx,
-		q,
-		login,
-	).Scan(&password)
-	if err != nil {
-		return "", err
-	}
-
-	return password, nil
-}
-
-func Register(ctx context.Context, trx pgx.Tx, login, password string) error {
+func Register(ctx context.Context, trx pgx.Tx, login, encryptedPassword string) error {
 	q := `
 		INSERT INTO public.Users (login, password)
 		VALUES ($1, $2)
@@ -36,10 +18,28 @@ func Register(ctx context.Context, trx pgx.Tx, login, password string) error {
 		ctx,
 		q,
 		login,
-		password,
+		encryptedPassword,
 	)
 
 	return err
+}
+
+func GetEncryptedPassword(ctx context.Context, trx pgx.Tx, login string) (encryptedPassword string, err error) {
+	q := `
+	SELECT password
+	FROM public.Users
+	WHERE login = $1
+`
+	err = trx.QueryRow(
+		ctx,
+		q,
+		login,
+	).Scan(&encryptedPassword)
+	if err != nil {
+		return "", err
+	}
+
+	return encryptedPassword, nil
 }
 
 func GetLoginByNumber(ctx context.Context, trx pgx.Tx, number int64) (login string, err error) {

@@ -41,19 +41,19 @@ func (s *service) NewToken(login string) (token string, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.storage[login] = token
+	s.storage[token] = login
 
 	return token, nil
 }
 
-func (s *service) CheckToken(login string, token string) (ok bool) {
+func (s *service) GetLogin(token string) (login string, ok bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	storedToken, exists := s.storage[login]
+	login, exists := s.storage[token]
 	if !exists {
-		return false
+		return "", false
 	}
 
-	return token == storedToken
+	return login, true
 }

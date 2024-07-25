@@ -1,9 +1,15 @@
 package accrual
 
+type Order struct {
+	Login      string
+	Status     string
+	Number     int64
+	Accrual    int64
+	UploadedAt string
+}
+
 type Svc interface {
-	// LoadNotFinalizedOrders()
-	// NewOrder adds new not finalized order
-	// NewOrder()
+	Process()
 }
 
 // новый заказ:

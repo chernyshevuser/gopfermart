@@ -33,17 +33,17 @@ func (i *implementation) Register(w http.ResponseWriter, r *http.Request) error 
 
 	ctx := r.Context()
 
-	ok, sessionToken, err := i.svc.Register(ctx, *req.Login, *req.Password)
+	sessionToken, err := i.svc.Register(ctx, *req.Login, *req.Password)
 	if err != nil {
 		return err
 	}
 
-	if !ok {
+	if sessionToken == nil {
 		status = http.StatusConflict
 	} else {
 		http.SetCookie(w, &http.Cookie{
 			Name:    "token",
-			Value:   sessionToken,
+			Value:   *sessionToken,
 			Expires: time.Now().Add(24 * time.Hour),
 		})
 	}

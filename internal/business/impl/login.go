@@ -11,61 +11,58 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (g *gophermart) Login(ctx context.Context, login, password string) (ok bool, sessionToken string, err error) {
-	ok = true
+// Login returns nil sessionToken if user/password data doesn't exist
+func (g *gophermart) Login(ctx context.Context, login, password string) (sessionToken *string, err error) {
+	tx, err := g.db.BeginR(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create db tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
 
-	encryptedPassword, exists := g.storage.Get(login)
-	if !exists {
-		tx, err := g.db.BeginR(ctx)
+	var encryptedPassword string
+
+	err = db.SimpleInTx(ctx, tx, func(ctx context.Context, tx pgx.Tx) (err error) {
+		encryptedPassword, err = query.GetEncryptedPassword(ctx, tx, login)
 		if err != nil {
-			return false, "", fmt.Errorf("creating db tx failed: %w", err)
-		}
-		defer tx.Rollback(ctx)
-
-		err = db.SimpleInTx(ctx, tx, func(ctx context.Context, tx pgx.Tx) (err error) {
-			encryptedPassword, err = query.GetUserPassword(ctx, tx, login)
-			if err != nil {
-				if errors.Is(err, pgx.ErrNoRows) {
-					ok = false
-					return nil
-				}
-				return err
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil
 			}
-
-			g.storage.Set(login, encryptedPassword)
-			return nil
-		})
-		if err != nil {
-			return false, "", err
+			return err
 		}
 
-		if err = tx.Commit(ctx); err != nil {
-			return false, "", fmt.Errorf("error in commiting transaction: %w", err)
-		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	if !ok {
-		return false, "", nil
+	if err = tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit db tx: %w", err)
+	}
+
+	// wrong login/password pair
+	if len(encryptedPassword) == 0 {
+		return nil, nil
 	}
 
 	decryptedPassword, err := utils.Decrypt(encryptedPassword)
 	if err != nil {
 		g.logger.Errorw(
-			"decryption failed",
+			"failed to decrypt password",
 			"msg", err,
 		)
-		return ok, "", err
+		return nil, fmt.Errorf("failed to decrypt password: %w", err)
 	}
 
-	ok = decryptedPassword == password
-	if !ok {
-		return ok, "", nil
+	// wrong login/password pair
+	if decryptedPassword != password {
+		return nil, nil
 	}
 
-	sessionToken, err = g.sessionSvc.NewToken(login)
+	token, err := g.sessionSvc.NewToken(login)
 	if err != nil {
-		return ok, "", err
+		return nil, fmt.Errorf("failed to create new session token: %w", err)
 	}
 
-	return ok, sessionToken, nil
+	return &token, nil
 }

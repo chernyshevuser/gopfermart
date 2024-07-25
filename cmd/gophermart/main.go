@@ -41,7 +41,6 @@ func main() {
 	}
 
 	go closer.GracefulShutdown(
-		make(chan struct{}, 1),
 		dbSvc,
 	)
 }

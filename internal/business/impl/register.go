@@ -11,19 +11,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (g *gophermart) Register(ctx context.Context, login, password string) (ok bool, sessionToken string, err error) {
-	ok = true
-
-	_, exists := g.storage.Get(login)
-	if exists {
-		ok = false
-		return
-	}
-
+// Register returns nil sessionToken if user is already exist
+func (g *gophermart) Register(ctx context.Context, login, password string) (sessionToken *string, err error) {
 	encryptedPassword, err := utils.Encrypt(password)
 	if err != nil {
 		g.logger.Errorw(
-			"decryption failed",
+			"pass encryption failed",
+			"login", login,
 			"msg", err,
 		)
 		return
@@ -31,38 +25,34 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (ok b
 
 	tx, err := g.db.BeginW(ctx)
 	if err != nil {
-		return false, "", fmt.Errorf("creating db tx failed: %w", err)
+		return nil, fmt.Errorf("failed to create db tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
 	err = db.SimpleInTx(ctx, tx, func(ctx context.Context, tx pgx.Tx) (err error) {
-		_, err = query.GetUserPassword(ctx, tx, login)
+		_, err = query.GetEncryptedPassword(ctx, tx, login)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return query.Register(ctx, tx, login, encryptedPassword)
 			}
+
 			return err
 		}
 
-		ok = false
 		return nil
 	})
 	if err != nil {
-		return false, "", err
+		return nil, err
 	}
 
 	if err = tx.Commit(ctx); err != nil {
-		return ok, "", fmt.Errorf("error in commiting transaction: %w", err)
+		return nil, fmt.Errorf("failed to commit db tx: %w", err)
 	}
 
-	if !ok {
-		return false, "", nil
-	}
-
-	sessionToken, err = g.sessionSvc.NewToken(login)
+	token, err := g.sessionSvc.NewToken(login)
 	if err != nil {
-		return false, "", err
+		return nil, fmt.Errorf("failed to create new session token: %w", err)
 	}
 
-	return true, sessionToken, nil
+	return &token, nil
 }
