@@ -83,6 +83,7 @@ func SetupConfig(logger logger.Logger) {
 		JwtSecretKey = jwtSecretKey
 	}
 
+	//TODO printing envs lol
 	logger.Infow(
 		"config",
 		"runAddr", RunAddr,

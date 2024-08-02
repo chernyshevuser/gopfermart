@@ -22,8 +22,7 @@ func main() {
 	dbSvc, err := db.NewDbSvc()
 	if err != nil {
 		logger.Errorw(
-			"cant create db svc",
-			"reason", err,
+			"cant create db svc", "reason", err,
 		)
 		panic("postgres initialization failed")
 	}
@@ -33,14 +32,20 @@ func main() {
 	businessSvc := business.NewSvc(logger, dbSvc)
 	apiSvc := api.NewImplementation(businessSvc, logger)
 
-	muxRouter := mux.NewRouter()
-	router.SetupRouter(apiSvc, muxRouter, logger)
-
-	if err = http.ListenAndServe(config.RunAddr, muxRouter); err != nil {
-		panic(err)
-	}
-
 	go closer.GracefulShutdown(
 		dbSvc,
 	)
+
+	muxRouter := mux.NewRouter()
+	router.SetupRouter(apiSvc, muxRouter, logger)
+
+	server := http.Server{
+		Addr:    config.RunAddr,
+		Handler: muxRouter,
+	}
+
+	if err = server.ListenAndServe(); err != nil {
+		panic(err)
+	}
+
 }

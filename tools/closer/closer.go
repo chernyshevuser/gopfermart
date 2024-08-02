@@ -13,17 +13,16 @@ type Closer interface {
 
 func GracefulShutdown(closers ...Closer) {
 	s := make(chan os.Signal, 1)
-
 	signal.Notify(s, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
 	<-s
-
 	closeAll(closers...)
 }
 
 func closeAll(closers ...Closer) {
 	for i := range closers {
-		closers[i].Close()
+		if err := closers[i].Close(); err != nil {
+			fmt.Printf("Error closing resource: %v\n", err)
+		}
 	}
 	fmt.Println("Graceful shutdown!")
 }
