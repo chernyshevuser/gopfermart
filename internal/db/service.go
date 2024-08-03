@@ -13,7 +13,7 @@ type DBService interface {
 	BeginR(ctx context.Context) (pgx.Tx, error)
 	BeginW(ctx context.Context) (pgx.Tx, error)
 	Close() error
-	Actualizing()
+	Actualizing(ctx context.Context) error
 }
 
 func InTx[T any](ctx context.Context, tx pgx.Tx, f func(context.Context, pgx.Tx) (T, error)) (T, error) {

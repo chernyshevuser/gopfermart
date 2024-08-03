@@ -19,9 +19,9 @@ type service struct {
 	conn *pgxpool.Pool
 }
 
-func NewDbSvc() (svc db.DBService, err error) {
+func NewDbSvc(ctx context.Context) (svc db.DBService, err error) {
 	dbPool, err := pgxpool.New(
-		context.TODO(),
+		ctx,
 		config.DatabaseUri,
 	)
 
@@ -29,7 +29,7 @@ func NewDbSvc() (svc db.DBService, err error) {
 		return nil, fmt.Errorf("failed to create dbPool: %w", err)
 	}
 
-	err = dbPool.Ping(context.TODO())
+	err = dbPool.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to ping postgreSQL: %w", err)
 	}
@@ -81,8 +81,8 @@ func (svc *service) Close() error {
 	return nil
 }
 
-func (svc *service) Actualizing() {
-	err := svc.conn.AcquireFunc(context.TODO(), func(*pgxpool.Conn) error {
+func (svc *service) Actualizing(ctx context.Context) error {
+	return svc.conn.AcquireFunc(ctx, func(*pgxpool.Conn) error {
 		goose.SetBaseFS(files.Migrations)
 
 		if err := goose.SetDialect("pgx"); err != nil {
@@ -107,7 +107,4 @@ func (svc *service) Actualizing() {
 
 		return nil
 	})
-	if err != nil {
-		panic(err)
-	}
 }
