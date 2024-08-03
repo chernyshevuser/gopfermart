@@ -6,13 +6,13 @@ import (
 	"github.com/chernyshevuser/gopfermart.git/tools/logger"
 )
 
-type implementation struct {
+type api struct {
 	svc    business.Svc
 	logger logger.Logger
 }
 
 func New(svc business.Svc, logger logger.Logger) handler.API {
-	return &implementation{
+	return &api{
 		svc:    svc,
 		logger: logger,
 	}

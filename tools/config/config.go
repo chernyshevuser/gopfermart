@@ -24,7 +24,7 @@ var (
 	JwtSecretKey      string
 )
 
-func SetupConfig(logger logger.Logger) {
+func Setup(logger logger.Logger) {
 	flag.StringVar(&RunAddr, "a", "localhost:8080", "runAddr")
 	flag.StringVar(&DatabaseUri, "d", "", "dbUri")
 	flag.StringVar(&AccrualSystemAddr, "r", "", "accrual system addr")

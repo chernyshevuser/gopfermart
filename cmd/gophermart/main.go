@@ -25,7 +25,7 @@ func main() {
 	logger := logger.New()
 	defer logger.Sync()
 
-	config.SetupConfig(logger)
+	config.Setup(logger)
 
 	dbSvc, err := db.NewDbSvc(mainCtx)
 	if err != nil {

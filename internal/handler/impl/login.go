@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (i *implementation) Login(w http.ResponseWriter, r *http.Request) error {
+func (a *api) Login(w http.ResponseWriter, r *http.Request) error {
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(r.Body); err != nil {
 		return err
@@ -28,7 +28,7 @@ func (i *implementation) Login(w http.ResponseWriter, r *http.Request) error {
 
 	ctx := r.Context()
 
-	sessionToken, err := i.svc.Login(ctx, *req.Login, *req.Password)
+	sessionToken, err := a.svc.Login(ctx, *req.Login, *req.Password)
 	if err != nil {
 		return err
 	}
