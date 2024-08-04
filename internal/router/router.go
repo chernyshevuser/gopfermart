@@ -3,9 +3,9 @@ package router
 import (
 	"net/http"
 
-	"github.com/chernyshevuser/gopfermart.git/internal/handler"
-	"github.com/chernyshevuser/gopfermart.git/internal/middleware"
-	"github.com/chernyshevuser/gopfermart.git/tools/logger"
+	"github.com/chernyshevuser/gopfermart/internal/handler"
+	"github.com/chernyshevuser/gopfermart/internal/middleware"
+	"github.com/chernyshevuser/gopfermart/tools/logger"
 	"github.com/gorilla/mux"
 )
 

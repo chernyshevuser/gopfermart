@@ -5,15 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/chernyshevuser/gopfermart.git/internal/business/impl/utils"
-	"github.com/chernyshevuser/gopfermart.git/internal/db"
-	query "github.com/chernyshevuser/gopfermart.git/internal/db/impl"
+	"github.com/chernyshevuser/gopfermart/internal/business"
+	"github.com/chernyshevuser/gopfermart/internal/db"
+	query "github.com/chernyshevuser/gopfermart/internal/db/impl"
 	"github.com/jackc/pgx/v5"
 )
 
 // Register returns nil sessionToken if user is already exist
-func (g *gophermart) Register(ctx context.Context, login, password string) (sessionToken *string, err error) {
-	encryptedPassword, err := utils.Encrypt(password)
+func (g *gophermart) Register(ctx context.Context, login, password string) (sessionToken string, err error) {
+	encryptedPassword, err := g.cryptoSvc.Encrypt(password)
 	if err != nil {
 		g.logger.Errorw(
 			"pass encryption failed",
@@ -25,7 +25,7 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (sess
 
 	tx, err := g.db.BeginW(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create db tx: %w", err)
+		return "", fmt.Errorf("failed to create db tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -35,7 +35,7 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (sess
 		_, err = query.GetEncryptedPassword(ctx, tx, login)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return query.Register(ctx, tx, login, encryptedPassword)
+				return query.RegisterUser(ctx, tx, login, encryptedPassword)
 			}
 
 			return err
@@ -45,21 +45,21 @@ func (g *gophermart) Register(ctx context.Context, login, password string) (sess
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if err = tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit db tx: %w", err)
+		return "", fmt.Errorf("failed to commit db tx: %w", err)
 	}
 
 	if userAlreadyExists {
-		return nil, nil
+		return "", business.ErrUserAlreadyExists
 	}
 
 	token, err := g.sessionSvc.NewToken(login)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new session token: %w", err)
+		return "", fmt.Errorf("failed to create new session token: %w", err)
 	}
 
-	return &token, nil
+	return token, nil
 }

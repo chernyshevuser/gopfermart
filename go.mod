@@ -1,4 +1,4 @@
-module github.com/chernyshevuser/gopfermart.git
+module github.com/chernyshevuser/gopfermart
 
 go 1.21.1
 

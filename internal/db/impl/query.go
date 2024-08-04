@@ -2,13 +2,11 @@ package impl
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 )
 
-func Register(ctx context.Context, trx pgx.Tx, login, encryptedPassword string) error {
+func RegisterUser(ctx context.Context, trx pgx.Tx, login, encryptedPassword string) error {
 	q := `
 		INSERT INTO public.Users (login, password)
 		VALUES ($1, $2)
@@ -26,9 +24,9 @@ func Register(ctx context.Context, trx pgx.Tx, login, encryptedPassword string) 
 
 func GetEncryptedPassword(ctx context.Context, trx pgx.Tx, login string) (encryptedPassword string, err error) {
 	q := `
-	SELECT password
-	FROM public.Users
-	WHERE login = $1
+		SELECT password
+		FROM public.Users
+		WHERE login = $1
 `
 	err = trx.QueryRow(
 		ctx,
@@ -42,123 +40,193 @@ func GetEncryptedPassword(ctx context.Context, trx pgx.Tx, login string) (encryp
 	return encryptedPassword, nil
 }
 
-func GetLoginByNumber(ctx context.Context, trx pgx.Tx, number int64) (login string, err error) {
+func GetUserBalance(ctx context.Context, trx pgx.Tx, login string) (bal float64, err error) {
 	q := `
-		SELECT login 
-		FROM public.Numbers
-		WHERE number = $1
+		SELECT balance
+		FROM public.Users
+		WHERE login = $1
 	`
 
 	err = trx.QueryRow(
 		ctx,
 		q,
-		number,
-	).Scan(&login)
+		login,
+	).Scan(&bal)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return "", nil
-		}
-
-		return "", fmt.Errorf("error in fetching login for number %d: %w", number, err)
+		return 0, err
 	}
 
-	return login, nil
+	return bal, nil
 }
 
-func AddOrderNumber(ctx context.Context, trx pgx.Tx, number int64, login string) error {
+func UpdateUserBalance(ctx context.Context, trx pgx.Tx, login string, newBal float64) error {
 	q := `
-		INSERT INTO public.Numbers (number, login)
-		VALUES ($1, $2)
+		UPDATE public.Users
+		SET balance = $1
+		WHERE login = $2
 	`
 
 	_, err := trx.Exec(
 		ctx,
 		q,
-		number,
+		newBal,
 		login,
 	)
 
 	return err
 }
 
-func GetAllNotFinalizedOdrers(ctx context.Context, trx pgx.Tx) (orders AllOrders, err error) {
+func RegisterOrder(ctx context.Context, trx pgx.Tx, order Order) error {
 	q := `
-		SELECT login, notFinalizedOrders 
-		FROM public.Orders
+		INSERT INTO public.Orders (number, login, status, accrual, uploaded_at)
+		VALUES($1, $2, $3, $4, $5)
+	`
+
+	_, err := trx.Exec(
+		ctx,
+		q,
+		order.Number,
+		order.Login,
+		order.Status,
+		order.Accrual,
+		order.UploadedAt,
+	)
+
+	return err
+}
+
+func GetOrderByNumber(ctx context.Context, trx pgx.Tx, number string) (order Order, err error) {
+	q := `
+		SELECT
+			login, status, accrual, uploaded_at
+		FROM
+			public.Orders
+		WHERE
+			number = $1
+	`
+
+	err = trx.QueryRow(
+		ctx,
+		q,
+		number,
+	).Scan(
+		&order.Login,
+		&order.Status,
+		&order.Accrual,
+		&order.UploadedAt,
+	)
+	if err != nil {
+		return Order{}, err
+	}
+
+	order.Number = number
+
+	return order, nil
+}
+
+func GetOrdersByUser(ctx context.Context, trx pgx.Tx, login string) (orders []Order, err error) {
+	q := `
+		SELECT 
+			number, status, accrual, uploaded_at
+		FROM 
+			public.Orders
+		WHERE
+			login = $1
 	`
 
 	rows, err := trx.Query(
 		ctx,
 		q,
+		login,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return orders, nil
-		}
-
-		return orders, fmt.Errorf("error in fetching orders data: %w", err)
+		return []Order{}, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		unit := UserOrders{}
+		order := Order{}
 		err = rows.Scan(
-			&unit.Login,
-			&unit.Orders,
+			&order.Number,
+			&order.Status,
+			&order.Accrual,
+			&order.UploadedAt,
 		)
 		if err != nil {
-			return orders, fmt.Errorf("error in scanning data: %w", err)
+			return []Order{}, err
 		}
 
-		orders.Data = append(orders.Data, unit)
-	}
-	if err = rows.Err(); err != nil {
-		return orders, fmt.Errorf("error in reading data: %w", err)
+		orders = append(orders, order)
 	}
 
-	return
+	err = rows.Err()
+	if err != nil {
+		return []Order{}, err
+	}
+
+	return orders, nil
 }
 
-// TODO write 2 functions for 2 types of orders for optimization
-func GetUserOrders(ctx context.Context, trx pgx.Tx, login string) (notFinalizedOrders AllOrders, finalizedOrders AllOrders, err error) {
+func UpdateOrder(ctx context.Context, trx pgx.Tx, updatedOrder Order) error {
 	q := `
-	SELECT finalizedOrders, notFinalizedOrders 
-	FROM public.Orders
-	WHERE login = $1
-`
-
-	err = trx.QueryRow(
-		ctx,
-		q,
-		login,
-	).Scan(
-		&finalizedOrders,
-		&notFinalizedOrders,
-	)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		err = nil
-		return
-	}
-
-	return
-}
-
-// TODO write 2 functions for 2 types of orders for optimization
-func UpdateUserOrders(ctx context.Context, trx pgx.Tx, login string, notFinalizedOrders AllOrders, finalizedOrders AllOrders) error {
-	q := `
-	UPDATE public.Orders
-	SET notFinalizedOrders = $1, 
-		finalizedOrders = $2
-	WHERE login = $3
-`
+		UPDATE
+			public.Orders
+		SET
+			status = $1, 
+			accrual = $2
+		WHERE
+			number = $3
+	`
 
 	_, err := trx.Exec(
 		ctx,
 		q,
-		notFinalizedOrders,
-		finalizedOrders,
-		login,
+		updatedOrder.Status,
+		updatedOrder.Accrual,
+		updatedOrder.Number,
 	)
 
 	return err
+}
+
+func GetWithdrawals(ctx context.Context, trx pgx.Tx, login string) (withdrawals []Withdrawal, err error) {
+	q := `
+		SELECT 
+			"order", sum, processed_at
+		FROM 
+			public.Withdrawals
+		WHERE
+			login = $1
+	`
+
+	rows, err := trx.Query(
+		ctx,
+		q,
+		login,
+	)
+	if err != nil {
+		return []Withdrawal{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		withdrawal := Withdrawal{}
+		err = rows.Scan(
+			&withdrawal.Order,
+			&withdrawal.Sum,
+			&withdrawal.Processed_at,
+		)
+		if err != nil {
+			return []Withdrawal{}, err
+		}
+
+		withdrawals = append(withdrawals, withdrawal)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return []Withdrawal{}, err
+	}
+
+	return withdrawals, nil
 }

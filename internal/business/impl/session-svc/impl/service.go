@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	sessionsvc "github.com/chernyshevuser/gopfermart.git/internal/business/impl/session-svc"
+	sessionsvc "github.com/chernyshevuser/gopfermart/internal/business/impl/session-svc"
 	"github.com/golang-jwt/jwt"
 )
 

@@ -1,9 +1,11 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE public.Orders (
-    login TEXT PRIMARY KEY,
-    finalizedOrders JSONB,
-    notFinalizedOrders JSONB
+    number TEXT PRIMARY KEY,
+    login TEXT,
+    status TEXT,
+    accrual FLOAT8 DEFAULT 0,
+    uploaded_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 -- +goose StatementEnd
 

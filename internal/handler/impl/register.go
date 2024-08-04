@@ -3,8 +3,11 @@ package impl
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
+
+	"github.com/chernyshevuser/gopfermart/internal/business"
 )
 
 type RegisterReq struct {
@@ -35,18 +38,19 @@ func (a *api) Register(w http.ResponseWriter, r *http.Request) error {
 
 	sessionToken, err := a.svc.Register(ctx, *req.Login, *req.Password)
 	if err != nil {
+		if errors.Is(err, business.ErrUserAlreadyExists) {
+			status = http.StatusConflict
+			w.WriteHeader(status)
+			return nil
+		}
 		return err
 	}
 
-	if sessionToken == nil {
-		status = http.StatusConflict
-	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:    "token",
-			Value:   *sessionToken,
-			Expires: time.Now().Add(24 * time.Hour),
-		})
-	}
+	http.SetCookie(w, &http.Cookie{
+		Name:    "token",
+		Value:   sessionToken,
+		Expires: time.Now().Add(24 * time.Hour),
+	})
 
 	w.WriteHeader(status)
 	return nil

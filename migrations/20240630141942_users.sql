@@ -3,7 +3,8 @@
 CREATE TABLE public.Users (
     login TEXT PRIMARY KEY,
     password TEXT,
-    balance FLOAT8 DEFAULT 0
+    balance FLOAT8 DEFAULT 0,
+    withdrawn FLOAT8 DEFAULT 0
 );
 -- +goose StatementEnd
 

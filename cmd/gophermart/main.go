@@ -8,12 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	business "github.com/chernyshevuser/gopfermart.git/internal/business/impl"
-	db "github.com/chernyshevuser/gopfermart.git/internal/db/impl"
-	api "github.com/chernyshevuser/gopfermart.git/internal/handler/impl"
-	"github.com/chernyshevuser/gopfermart.git/internal/router"
-	"github.com/chernyshevuser/gopfermart.git/tools/config"
-	"github.com/chernyshevuser/gopfermart.git/tools/logger"
+	business "github.com/chernyshevuser/gopfermart/internal/business/impl"
+	db "github.com/chernyshevuser/gopfermart/internal/db/impl"
+	api "github.com/chernyshevuser/gopfermart/internal/handler/impl"
+	"github.com/chernyshevuser/gopfermart/internal/router"
+	"github.com/chernyshevuser/gopfermart/tools/config"
+	"github.com/chernyshevuser/gopfermart/tools/logger"
 	"github.com/gorilla/mux"
 	"golang.org/x/sync/errgroup"
 )

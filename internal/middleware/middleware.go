@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	sugared "github.com/chernyshevuser/gopfermart.git/tools/logger"
+	sugared "github.com/chernyshevuser/gopfermart/tools/logger"
 )
 
 func LogMiddleware(next http.HandlerFunc, logger sugared.Logger) http.HandlerFunc {
@@ -52,7 +52,7 @@ func ErrorMiddleware(next func(http.ResponseWriter, *http.Request) error, logger
 				"reason", err,
 			)
 
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
 }

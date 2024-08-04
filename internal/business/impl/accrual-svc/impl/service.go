@@ -1,6 +1,6 @@
 package impl
 
-import "github.com/chernyshevuser/gopfermart.git/internal/business/impl/accrual-svc"
+import "github.com/chernyshevuser/gopfermart/internal/business/impl/accrual-svc"
 
 type svc struct {
 	//order number -> order

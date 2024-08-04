@@ -1,9 +1,9 @@
 package impl
 
 import (
-	"github.com/chernyshevuser/gopfermart.git/internal/business"
-	"github.com/chernyshevuser/gopfermart.git/internal/handler"
-	"github.com/chernyshevuser/gopfermart.git/tools/logger"
+	"github.com/chernyshevuser/gopfermart/internal/business"
+	"github.com/chernyshevuser/gopfermart/internal/handler"
+	"github.com/chernyshevuser/gopfermart/tools/logger"
 )
 
 type api struct {

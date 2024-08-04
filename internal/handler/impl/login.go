@@ -3,9 +3,17 @@ package impl
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
+
+	"github.com/chernyshevuser/gopfermart/internal/business"
 )
+
+type LoginReq struct {
+	Login    *string `json:"login,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
 
 func (a *api) Login(w http.ResponseWriter, r *http.Request) error {
 	var buf bytes.Buffer
@@ -13,7 +21,7 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	var req RegisterReq
+	var req LoginReq
 	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
 		return err
 	}
@@ -30,18 +38,19 @@ func (a *api) Login(w http.ResponseWriter, r *http.Request) error {
 
 	sessionToken, err := a.svc.Login(ctx, *req.Login, *req.Password)
 	if err != nil {
+		if errors.Is(err, business.ErrUnauthorized) {
+			status = http.StatusUnauthorized
+			w.WriteHeader(status)
+			return nil
+		}
 		return err
 	}
 
-	if sessionToken == nil {
-		status = http.StatusUnauthorized
-	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:    "token",
-			Value:   *sessionToken,
-			Expires: time.Now().Add(24 * time.Hour),
-		})
-	}
+	http.SetCookie(w, &http.Cookie{
+		Name:    "token",
+		Value:   sessionToken,
+		Expires: time.Now().Add(24 * time.Hour),
+	})
 
 	w.WriteHeader(status)
 	return nil

@@ -1,10 +1,9 @@
-package impl
+package business
 
 type Order struct {
 	Status     string
 	Number     string
-	Login      string
-	Accrual    float64
+	Accrual    *float64
 	UploadedAt string
 }
 

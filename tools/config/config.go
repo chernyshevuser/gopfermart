@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 
-	"github.com/chernyshevuser/gopfermart.git/tools/logger"
+	"github.com/chernyshevuser/gopfermart/tools/logger"
 )
 
 type configKey string

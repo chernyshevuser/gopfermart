@@ -5,9 +5,9 @@ import (
 
 	"fmt"
 
-	files "github.com/chernyshevuser/gopfermart.git"
-	"github.com/chernyshevuser/gopfermart.git/internal/db"
-	"github.com/chernyshevuser/gopfermart.git/tools/config"
+	files "github.com/chernyshevuser/gopfermart"
+	"github.com/chernyshevuser/gopfermart/internal/db"
+	"github.com/chernyshevuser/gopfermart/tools/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/jackc/pgx/v5"
