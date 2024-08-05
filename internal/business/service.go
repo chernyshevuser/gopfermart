@@ -10,6 +10,6 @@ type Svc interface {
 	NewOrder() error
 	GetOrders(ctx context.Context, token string) (orders []Order, err error)
 	GetBalance(ctx context.Context, token string) (current float64, withdrawn float64, err error)
-	Withdraw() error
+	Withdraw(ctx context.Context, token string, orderNum string, withdrawal float64) error
 	GetWithdrawals(ctx context.Context, token string) (withdrawals []Withdrawal, err error)
 }

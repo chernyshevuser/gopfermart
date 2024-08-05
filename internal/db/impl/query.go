@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -27,7 +28,7 @@ func GetEncryptedPassword(ctx context.Context, trx pgx.Tx, login string) (encryp
 		SELECT password
 		FROM public.Users
 		WHERE login = $1
-`
+	`
 	err = trx.QueryRow(
 		ctx,
 		q,
@@ -229,4 +230,27 @@ func GetWithdrawals(ctx context.Context, trx pgx.Tx, login string) (withdrawals 
 	}
 
 	return withdrawals, nil
+}
+
+func AddWithdrawal(ctx context.Context, trx pgx.Tx, login string, order string, sum float64, timestamp time.Time) error {
+	query := `
+        INSERT INTO 
+			public.Withdrawals ("order", login, sum, processed_at)
+        VALUES 
+			($1, $2, $3, $4)
+    `
+
+	_, err := trx.Exec(
+		ctx,
+		query,
+		order,
+		login,
+		sum,
+		timestamp,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
