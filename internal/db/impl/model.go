@@ -9,7 +9,7 @@ type Order struct {
 }
 
 type Withdrawal struct {
-	Order        string
-	Sum          float64
-	Processed_at string
+	Order       string
+	Sum         float64
+	ProcessedAt string
 }

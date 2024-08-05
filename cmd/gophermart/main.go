@@ -46,10 +46,7 @@ func main() {
 		panic("postgres actualization failed")
 	}
 
-	businessSvc := business.NewSvc(
-		logger,
-		dbSvc,
-	)
+	businessSvc := business.New(logger, dbSvc)
 
 	apiSvc := api.New(businessSvc, logger)
 

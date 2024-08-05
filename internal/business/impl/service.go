@@ -20,7 +20,7 @@ type gophermart struct {
 	cryptoSvc  crypto.Svc
 }
 
-func NewSvc(logger logger.Logger, db db.DBService) business.Svc {
+func New(logger logger.Logger, db db.DBService) business.Svc {
 	return &gophermart{
 		logger:     logger,
 		db:         db,

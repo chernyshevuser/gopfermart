@@ -214,7 +214,7 @@ func GetWithdrawals(ctx context.Context, trx pgx.Tx, login string) (withdrawals 
 		err = rows.Scan(
 			&withdrawal.Order,
 			&withdrawal.Sum,
-			&withdrawal.Processed_at,
+			&withdrawal.ProcessedAt,
 		)
 		if err != nil {
 			return []Withdrawal{}, err

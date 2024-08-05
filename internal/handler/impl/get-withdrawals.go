@@ -66,7 +66,7 @@ func (a *api) GetWithdrawals(w http.ResponseWriter, r *http.Request) error {
 
 func convertWithdrawals(in []business.Withdrawal) (out []Withdrawal, err error) {
 	for _, tmp := range in {
-		processedAt, err := time.Parse(time.RFC3339, tmp.Processed_at)
+		processedAt, err := time.Parse(time.RFC3339, tmp.ProcessedAt)
 		if err != nil {
 			return []Withdrawal{}, err
 		}

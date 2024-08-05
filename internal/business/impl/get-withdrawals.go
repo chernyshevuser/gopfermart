@@ -53,7 +53,7 @@ func (g *gophermart) GetWithdrawals(ctx context.Context, token string) (withdraw
 
 		withdrawal.Order = tmp.Order
 		withdrawal.Sum = tmp.Sum
-		withdrawal.Processed_at = tmp.Processed_at
+		withdrawal.ProcessedAt = tmp.ProcessedAt
 
 		withdrawals = append(withdrawals, withdrawal)
 	}
