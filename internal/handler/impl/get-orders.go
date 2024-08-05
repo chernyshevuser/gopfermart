@@ -67,7 +67,7 @@ func (a *api) GetOrders(w http.ResponseWriter, r *http.Request) error {
 
 func convertOrders(in []business.Order) (out []Order, err error) {
 	for _, order := range in {
-		uploadedAt, err := time.Parse(time.RFC3339, order.UploadedAt)
+		uploadedAt := order.UploadedAt
 		if err != nil {
 			return []Order{}, err
 		}

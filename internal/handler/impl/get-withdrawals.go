@@ -11,9 +11,9 @@ import (
 )
 
 type Withdrawal struct {
-	Order        string    `json:"order"`
-	Sum          float64   `json:"sum"`
-	Processed_at time.Time `json:"processed_at"`
+	Order       string  `json:"order"`
+	Sum         float64 `json:"sum"`
+	ProcessedAt string  `json:"processed_at"`
 }
 
 func (a *api) GetWithdrawals(w http.ResponseWriter, r *http.Request) error {
@@ -44,14 +44,20 @@ func (a *api) GetWithdrawals(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	data, err := convertWithdrawals(withdrawals)
-	if err != nil {
-		return err
-	}
-
-	sort.Slice(data, func(i, j int) bool {
-		return data[i].Processed_at.Before(data[j].Processed_at)
+	sort.Slice(withdrawals, func(i, j int) bool {
+		return withdrawals[i].ProcessedAt.Before(withdrawals[j].ProcessedAt)
 	})
+
+	data := func() (out []Withdrawal) {
+		for _, tmp := range withdrawals {
+			out = append(out, Withdrawal{
+				Order:       tmp.Order,
+				Sum:         tmp.Sum,
+				ProcessedAt: tmp.ProcessedAt.Format(time.RFC3339),
+			})
+		}
+		return out
+	}()
 
 	resp, err := json.Marshal(data)
 	if err != nil {
@@ -62,21 +68,4 @@ func (a *api) GetWithdrawals(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 	return nil
-}
-
-func convertWithdrawals(in []business.Withdrawal) (out []Withdrawal, err error) {
-	for _, tmp := range in {
-		processedAt, err := time.Parse(time.RFC3339, tmp.ProcessedAt)
-		if err != nil {
-			return []Withdrawal{}, err
-		}
-
-		out = append(out, Withdrawal{
-			Order:        tmp.Order,
-			Sum:          tmp.Sum,
-			Processed_at: processedAt,
-		})
-	}
-
-	return out, nil
 }
