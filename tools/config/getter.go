@@ -13,12 +13,3 @@ func GetConfigString(key configKey) (string, error) {
 
 	return val, nil
 }
-
-func MustGetConfigString(key configKey) string {
-	val := os.Getenv(string(key))
-	if len(val) == 0 {
-		panic(fmt.Sprintf("error in getting %s value", key))
-	}
-
-	return val
-}

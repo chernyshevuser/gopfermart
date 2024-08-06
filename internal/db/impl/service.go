@@ -94,15 +94,15 @@ func (svc *service) Actualize(ctx context.Context) error {
 			config.DatabaseUri,
 		)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		if err := goose.Up(con, "migrations"); err != nil {
-			panic(err)
+			return err
 		}
 
 		if err := con.Close(); err != nil {
-			panic(err)
+			return err
 		}
 
 		return nil
