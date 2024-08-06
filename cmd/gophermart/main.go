@@ -27,7 +27,7 @@ func main() {
 
 	config.Setup(logger)
 
-	dbSvc, err := db.NewDbSvc(mainCtx)
+	dbSvc, err := db.New(mainCtx)
 	if err != nil {
 		logger.Errorw(
 			"cant create db svc",
@@ -37,7 +37,7 @@ func main() {
 	}
 	defer dbSvc.Close()
 
-	err = dbSvc.Actualizing(mainCtx)
+	err = dbSvc.Actualize(mainCtx)
 	if err != nil {
 		logger.Errorw(
 			"cant actualize db",
@@ -47,6 +47,7 @@ func main() {
 	}
 
 	businessSvc := business.New(logger, dbSvc)
+	defer businessSvc.Close()
 
 	apiSvc := api.New(businessSvc, logger)
 

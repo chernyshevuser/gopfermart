@@ -12,4 +12,5 @@ type Svc interface {
 	GetBalance(ctx context.Context, token string) (current float64, withdrawn float64, err error)
 	Withdraw(ctx context.Context, token string, orderNum string, withdrawal float64) error
 	GetWithdrawals(ctx context.Context, token string) (withdrawals []Withdrawal, err error)
+	Close()
 }

@@ -19,7 +19,7 @@ type service struct {
 	conn *pgxpool.Pool
 }
 
-func NewDbSvc(ctx context.Context) (svc db.DBService, err error) {
+func New(ctx context.Context) (svc db.DBService, err error) {
 	dbPool, err := pgxpool.New(
 		ctx,
 		config.DatabaseUri,
@@ -81,7 +81,7 @@ func (svc *service) Close() error {
 	return nil
 }
 
-func (svc *service) Actualizing(ctx context.Context) error {
+func (svc *service) Actualize(ctx context.Context) error {
 	return svc.conn.AcquireFunc(ctx, func(*pgxpool.Conn) error {
 		goose.SetBaseFS(files.Migrations)
 
