@@ -1,25 +1,16 @@
 package accrual
 
+import "time"
+
 type Order struct {
-	Login      string
 	Status     string
-	Number     int64
-	Accrual    int64
-	UploadedAt string
+	Number     string
+	Login      string
+	Accrual    float64
+	UploadedAt time.Time
 }
 
 type Svc interface {
-	Process()
+	UpdateOrders()
+	Close()
 }
-
-// новый заказ:
-// *  [OK] проверка корректности номера заказа
-// *  [OK] проверка уникальности номера. Если нет, то кому принадлежит.
-// 	  запись в бд в numbers, orders.notFinalized внутри одной транзы
-// *  [OK] добавление ордера в сервис accrual для проверки
-//	  пинг внешней хуеты через условный воркер пул
-//	  как только меняется статус ордера, его необходимо обновить в бд. Для этого можно сделать канал, в который пишет
-//	  accrual сервис и читает основной сервис. Затем раз в некоторое время данные из канала перезаписываются в бд,
-//    то есть из notFinalized превращаются в finalized
-//
-// [] запрос в accrual систему до тех пор, пока статус не будет финализирован

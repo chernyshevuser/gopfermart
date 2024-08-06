@@ -1,30 +1,47 @@
 package impl
 
-import "github.com/chernyshevuser/gopfermart/internal/business/impl/accrual-svc"
+import (
+	"sync"
+
+	"github.com/chernyshevuser/gopfermart/internal/business/impl/accrual-svc"
+	"github.com/chernyshevuser/gopfermart/tools/config"
+	"github.com/chernyshevuser/gopfermart/tools/logger"
+)
 
 type svc struct {
-	//order number -> order
-	finishedOrders   map[string]accrual.Order
-	unfinishedOrders map[string]accrual.Order
-	//login -> []numbers
-	orders map[string]string
+	logger logger.Logger
+	url    string
 
-	in  chan (accrual.Order)
-	out chan (accrual.Order)
+	in            chan accrual.Order
+	outUpdated    chan accrual.Order
+	outNotUpdated chan accrual.Order
 
-	url string
+	// wg is for handling with workers
+	wgWorkers *sync.WaitGroup
+	// wg is for handling with main updating orders goroutine
+	wgProcess *sync.WaitGroup
 }
 
-func New(in chan (accrual.Order), accrualSvcUrl string) (accrual.Svc, chan (accrual.Order)) {
-	const chanLen = 5
-	out := make(chan (accrual.Order), chanLen)
+func New(logger logger.Logger, in chan (accrual.Order)) (service accrual.Svc, outUpdated, outNotUpdated chan (accrual.Order)) {
+	const sz = 5
 
-	return &svc{
-		finishedOrders:   make(map[string]accrual.Order),
-		unfinishedOrders: make(map[string]accrual.Order),
-		orders:           make(map[string]string),
-		in:               in,
-		out:              out,
-		url:              accrualSvcUrl,
-	}, out
+	outUpdated = make(chan (accrual.Order), sz)
+	outNotUpdated = make(chan (accrual.Order), sz)
+
+	s := &svc{
+		logger: logger,
+		url:    config.AccrualSystemAddr,
+
+		in:            in,
+		outUpdated:    outUpdated,
+		outNotUpdated: outNotUpdated,
+
+		wgWorkers: &sync.WaitGroup{},
+		wgProcess: &sync.WaitGroup{},
+	}
+
+	s.wgProcess.Add(1)
+	go s.UpdateOrders()
+
+	return s, outUpdated, outNotUpdated
 }

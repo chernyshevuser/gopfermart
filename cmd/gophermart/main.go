@@ -27,7 +27,7 @@ func main() {
 
 	config.Setup(logger)
 
-	dbSvc, err := db.New(mainCtx)
+	dbSvc, err := db.New(mainCtx, logger)
 	if err != nil {
 		logger.Errorw(
 			"cant create db svc",

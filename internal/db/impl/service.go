@@ -8,6 +8,7 @@ import (
 	files "github.com/chernyshevuser/gopfermart"
 	"github.com/chernyshevuser/gopfermart/internal/db"
 	"github.com/chernyshevuser/gopfermart/tools/config"
+	"github.com/chernyshevuser/gopfermart/tools/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/jackc/pgx/v5"
@@ -16,10 +17,11 @@ import (
 )
 
 type service struct {
-	conn *pgxpool.Pool
+	conn   *pgxpool.Pool
+	logger logger.Logger
 }
 
-func New(ctx context.Context) (svc db.DBService, err error) {
+func New(ctx context.Context, logger logger.Logger) (svc db.DBService, err error) {
 	dbPool, err := pgxpool.New(
 		ctx,
 		config.DatabaseUri,
@@ -35,7 +37,8 @@ func New(ctx context.Context) (svc db.DBService, err error) {
 	}
 
 	svc = &service{
-		conn: dbPool,
+		conn:   dbPool,
+		logger: logger,
 	}
 
 	return svc, nil
@@ -76,9 +79,10 @@ func (svc *service) BeginW(ctx context.Context) (pgx.Tx, error) {
 	return tx, err
 }
 
-func (svc *service) Close() error {
+func (svc *service) Close() {
 	svc.conn.Close()
-	return nil
+
+	svc.logger.Info("goodbye from db-svc")
 }
 
 func (svc *service) Actualize(ctx context.Context) error {

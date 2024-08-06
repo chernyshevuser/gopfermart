@@ -12,7 +12,7 @@ type DBService interface {
 	Exec(ctx context.Context, query string, args ...interface{}) error
 	BeginR(ctx context.Context) (pgx.Tx, error)
 	BeginW(ctx context.Context) (pgx.Tx, error)
-	Close() error
+	Close()
 	Actualize(ctx context.Context) error
 }
 
