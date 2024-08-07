@@ -1,6 +1,12 @@
 package impl
 
-import "github.com/chernyshevuser/gopfermart/internal/business/impl/accrual-svc"
+import (
+	"math/rand"
+	"time"
+
+	"github.com/chernyshevuser/gopfermart/internal/business"
+	"github.com/chernyshevuser/gopfermart/internal/business/impl/accrual-svc"
+)
 
 func (s *svc) UpdateOrders() {
 	defer s.wgProcess.Done()
@@ -15,17 +21,15 @@ func (s *svc) UpdateOrders() {
 			for order := range s.in {
 				updatedOrder, err := s.updateOrder(order)
 				if err != nil {
-					s.logger.Errorf(
-						"can't update order in accrual",
-						"reason", err,
-					)
-
 					s.outNotUpdated <- updatedOrder
+					continue
 				}
 
 				if order.Status == updatedOrder.Status {
 					s.outNotUpdated <- updatedOrder
+					continue
 				}
+
 				s.outUpdated <- updatedOrder
 			}
 		}()
@@ -34,6 +38,41 @@ func (s *svc) UpdateOrders() {
 
 func (s *svc) updateOrder(order accrual.Order) (updatedOrder accrual.Order, err error) {
 	//TODO implement logic
-	updatedOrder.Accrual = 1000
+
+	statuses := []string{
+		string(business.StatusInvalid),
+		string(business.StatusProcessed),
+		string(business.StatusProcessing),
+		string(business.StatusRegistered),
+	}
+
+	isFinalized := func(status string) bool {
+		return status == string(business.StatusInvalid) || status == string(business.StatusProcessed)
+	}
+	if isFinalized(order.Status) {
+		return order, nil
+	}
+
+	randomInd := rand.Intn(len(statuses))
+
+	s.logger.Infow(
+		"accrual svc",
+		"func", "updateOrder",
+		"login", order.Login,
+		"number", order.Number,
+		"prev status", order.Status,
+		"new status", statuses[randomInd],
+	)
+
+	updatedOrder = accrual.Order{
+		Status:     statuses[randomInd],
+		Number:     order.Number,
+		Login:      order.Login,
+		Accrual:    1000,
+		UploadedAt: order.UploadedAt,
+	}
+
+	time.Sleep(10 * time.Second)
+
 	return updatedOrder, nil
 }

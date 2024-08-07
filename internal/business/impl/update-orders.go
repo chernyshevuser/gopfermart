@@ -14,7 +14,10 @@ func (g *gophermart) handleNotUpdatedOrders() {
 	defer g.wgOut.Done()
 
 	for order := range g.accrualOutNotUpdated {
-		g.in <- order
+		ok := g.addToAccrualSvc(order)
+		if !ok {
+			return
+		}
 	}
 }
 
@@ -22,12 +25,16 @@ func (g *gophermart) handleUpdatedOrders() {
 	g.wgOut.Done()
 
 	isFinalized := func(status string) bool {
-		return status == string(business.Invalid) || status == string(business.Processed)
+		return status == string(business.StatusInvalid) || status == string(business.StatusProcessed)
 	}
 
 	for order := range g.accrualOutUpdated {
 		if !isFinalized(order.Status) {
-			g.in <- order
+			ok := g.addToAccrualSvc(order)
+			if !ok {
+				return
+			}
+
 			continue
 		}
 
@@ -78,7 +85,7 @@ func (g *gophermart) handleUpdatedOrders() {
 			return nil
 		}()
 		if err != nil {
-			g.logger.Errorf(
+			g.logger.Errorw(
 				"can't handle with updating orders",
 				"order.Number", order.Number,
 				"order.Status", order.Status,
@@ -87,7 +94,11 @@ func (g *gophermart) handleUpdatedOrders() {
 				"order.UploadedAt", order.UploadedAt.String(),
 				"reason", err,
 			)
-			g.in <- order
+
+			ok := g.addToAccrualSvc(order)
+			if !ok {
+				return
+			}
 		}
 	}
 }

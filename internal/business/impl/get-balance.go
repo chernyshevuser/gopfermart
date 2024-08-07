@@ -32,7 +32,6 @@ func (g *gophermart) GetBalance(ctx context.Context, token string) (current floa
 	err = db.SimpleInTx(ctx, tx, func(ctx context.Context, tx pgx.Tx) (err error) {
 		current, err = query.GetUserBalance(ctx, tx, login)
 		if err != nil {
-			fmt.Println("err=", err)
 			if !errors.Is(err, pgx.ErrNoRows) {
 				return err
 			}

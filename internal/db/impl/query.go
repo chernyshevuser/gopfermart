@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -150,6 +151,66 @@ func GetOrdersByUser(ctx context.Context, trx pgx.Tx, login string) (orders []Or
 		err = rows.Scan(
 			&order.Number,
 			&order.Status,
+			&order.Accrual,
+			&order.UploadedAt,
+		)
+		if err != nil {
+			return []Order{}, err
+		}
+
+		orders = append(orders, order)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return []Order{}, err
+	}
+
+	return orders, nil
+}
+
+func GetOrdersByStatuses(ctx context.Context, trx pgx.Tx, statuses []string) (orders []Order, err error) {
+	if len(statuses) == 0 {
+		return []Order{}, fmt.Errorf("statuses are empty")
+	}
+
+	q := `
+		SELECT status, number, login, accrual, uploaded_at
+		FROM public.Orders
+		WHERE
+	`
+
+	for i := 0; i < len(statuses); i++ {
+		q += fmt.Sprintf("status = $%d", i+1)
+		if i != len(statuses)-1 {
+			q += " OR "
+		}
+	}
+
+	converted := func() []any {
+		res := make([]any, 0, len(statuses))
+		for _, s := range statuses {
+			res = append(res, s)
+		}
+		return res
+	}()
+
+	rows, err := trx.Query(
+		ctx,
+		q,
+		converted...,
+	)
+	if err != nil {
+		return []Order{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		order := Order{}
+		err = rows.Scan(
+			&order.Status,
+			&order.Number,
+			&order.Login,
 			&order.Accrual,
 			&order.UploadedAt,
 		)
