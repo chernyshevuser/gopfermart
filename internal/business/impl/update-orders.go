@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// handleNotUpdatedOrders handles with received from accrualSvc orders
+// and sends it back
 func (g *gophermart) handleNotUpdatedOrders() {
 	defer g.wgOut.Done()
 
@@ -21,7 +23,8 @@ func (g *gophermart) handleNotUpdatedOrders() {
 	}
 }
 
-// handleUpdatedOrders updates orders in db if order gets finalized
+// handleUpdatedOrders handles with received from accrualSvc orders and
+// updates in in db if order gets finalized OR sends it to accrualSvc back if not
 func (g *gophermart) handleUpdatedOrders() {
 	g.wgOut.Done()
 
