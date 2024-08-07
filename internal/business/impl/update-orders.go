@@ -21,15 +21,12 @@ func (g *gophermart) handleNotUpdatedOrders() {
 	}
 }
 
+// handleUpdatedOrders updates orders in db if order gets finalized
 func (g *gophermart) handleUpdatedOrders() {
 	g.wgOut.Done()
 
-	isFinalized := func(status string) bool {
-		return status == string(business.StatusInvalid) || status == string(business.StatusProcessed)
-	}
-
 	for order := range g.accrualOutUpdated {
-		if !isFinalized(order.Status) {
+		if !business.IsFinalized(order.Status) {
 			ok := g.addToAccrualSvc(order)
 			if !ok {
 				return

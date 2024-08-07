@@ -28,7 +28,7 @@ func (g *gophermart) actualize() {
 		defer tx.Rollback(ctx)
 
 		err = db.SimpleInTx(ctx, tx, func(ctx context.Context, tx pgx.Tx) (err error) {
-			notFinalizedStatuses := []string{string(business.StatusNew), string(business.StatusProcessing), string(business.StatusRegistered)}
+			notFinalizedStatuses := business.GetNotFinalizedStatuses()
 
 			orders, err = query.GetOrdersByStatuses(ctx, tx, notFinalizedStatuses)
 			if err != nil {

@@ -46,10 +46,7 @@ func (s *svc) updateOrder(order accrual.Order) (updatedOrder accrual.Order, err 
 		string(business.StatusRegistered),
 	}
 
-	isFinalized := func(status string) bool {
-		return status == string(business.StatusInvalid) || status == string(business.StatusProcessed)
-	}
-	if isFinalized(order.Status) {
+	if business.IsFinalized(order.Status) {
 		return order, nil
 	}
 
@@ -57,7 +54,7 @@ func (s *svc) updateOrder(order accrual.Order) (updatedOrder accrual.Order, err 
 
 	s.logger.Infow(
 		"accrual svc",
-		"func", "updateOrder",
+		"msg", "updating order",
 		"login", order.Login,
 		"number", order.Number,
 		"prev status", order.Status,

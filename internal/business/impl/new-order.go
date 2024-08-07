@@ -37,7 +37,7 @@ func (g *gophermart) NewOrder(ctx context.Context, token string, orderNum string
 
 	var errOrderAlreadyExist error
 	orderToReg := query.Order{
-		Status:     string(business.StatusNew),
+		Status:     business.GetInitialStatus(),
 		Number:     orderNum,
 		Login:      login,
 		UploadedAt: time.Now(),
@@ -76,6 +76,10 @@ func (g *gophermart) NewOrder(ctx context.Context, token string, orderNum string
 		return fmt.Errorf("failed to commit db tx: %w", err)
 	}
 
+	if errOrderAlreadyExist != nil {
+		return errOrderAlreadyExist
+	}
+
 	g.wgIn.Add(1)
 	go func() {
 		defer g.wgIn.Done()
@@ -87,10 +91,6 @@ func (g *gophermart) NewOrder(ctx context.Context, token string, orderNum string
 			UploadedAt: orderToReg.UploadedAt,
 		})
 	}()
-
-	if errOrderAlreadyExist != nil {
-		return errOrderAlreadyExist
-	}
 
 	return nil
 }
