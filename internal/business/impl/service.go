@@ -28,9 +28,9 @@ type gophermart struct {
 	accrualOutNotUpdated chan accrual.Order
 
 	in chan accrual.Order
-	// killIn is for closing in chan. Should be checked before [in <-] operation
-	killIn  chan struct{}
-	errChan chan error
+	// killIn is for closing in chan. Should be checked before [in <-] operation.
+	// used as analogue of bool & mutex
+	killIn chan struct{}
 	// wg is for handling with writing to in chan with new api reqs
 	wgIn *sync.WaitGroup
 
@@ -42,8 +42,6 @@ func New(logger logger.Logger, db db.DBService) business.Svc {
 	const sz = 10
 	in := make(chan accrual.Order, sz)
 	killIn := make(chan struct{})
-
-	errChan := make(chan error, 1)
 
 	accrualSvc, outUpdated, outNotUpdated := accrualimpl.New(logger, in)
 
@@ -57,16 +55,17 @@ func New(logger logger.Logger, db db.DBService) business.Svc {
 		accrualOutNotUpdated: outNotUpdated,
 		accrualOutUpdated:    outUpdated,
 
-		in:      in,
-		killIn:  killIn,
-		errChan: errChan,
-		wgIn:    &sync.WaitGroup{},
-		wgOut:   &sync.WaitGroup{},
+		in:     in,
+		killIn: killIn,
+		wgIn:   &sync.WaitGroup{},
+		wgOut:  &sync.WaitGroup{},
 	}
 
+	errChan := make(chan error, 1)
+
 	gophermart.wgIn.Add(2)
-	go gophermart.actualize()
-	go gophermart.handleActualizingErr()
+	go gophermart.actualize(errChan)
+	go gophermart.handleActualizingErr(errChan)
 
 	gophermart.wgOut.Add(2)
 	go gophermart.handleNotUpdatedOrders()

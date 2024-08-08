@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -13,7 +12,6 @@ import (
 	db "github.com/chernyshevuser/gopfermart/internal/db/impl"
 	api "github.com/chernyshevuser/gopfermart/internal/handler/impl"
 	"github.com/chernyshevuser/gopfermart/internal/router"
-	"github.com/chernyshevuser/gopfermart/tools/algo/lunh"
 	"github.com/chernyshevuser/gopfermart/tools/config"
 	"github.com/chernyshevuser/gopfermart/tools/logger"
 	"github.com/gorilla/mux"
@@ -21,10 +19,6 @@ import (
 )
 
 func main() {
-	for i := 0; i < 10; i++ {
-		fmt.Println(lunh.Generate(10))
-	}
-
 	mainCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 

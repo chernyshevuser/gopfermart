@@ -14,7 +14,7 @@ import (
 
 // actualize loads not finalized orders from db and processes it
 // TODO use batch logic
-func (g *gophermart) actualize() {
+func (g *gophermart) actualize(errChan chan<- error) {
 	defer g.wgIn.Done()
 
 	ctx := context.TODO()
@@ -51,7 +51,8 @@ func (g *gophermart) actualize() {
 		return nil
 	}()
 	if err != nil {
-		g.errChan <- fmt.Errorf("can't load orders from db, reason: %v", err)
+		errChan <- fmt.Errorf("can't load orders from db, reason: %v", err)
+		close(errChan)
 		return
 	}
 
@@ -69,23 +70,25 @@ func (g *gophermart) actualize() {
 			UploadedAt: order.UploadedAt,
 		})
 		if !ok {
+			close(errChan)
 			return
 		}
 	}
 
-	g.errChan <- nil
+	close(errChan)
 }
 
-func (g *gophermart) handleActualizingErr() {
+func (g *gophermart) handleActualizingErr(errChan <-chan error) {
 	defer g.wgIn.Done()
 
-	err := <-g.errChan
-	if err != nil {
-		g.logger.Errorw(
-			"orders actualization failed",
-			"reason", err,
-		)
-		return
+	for err := range errChan {
+		if err != nil {
+			g.logger.Errorw(
+				"orders actualization failed",
+				"reason", err,
+			)
+			return
+		}
 	}
 
 	g.logger.Infow(

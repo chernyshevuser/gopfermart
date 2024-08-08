@@ -181,11 +181,13 @@ func GetOrdersByStatuses(ctx context.Context, trx pgx.Tx, statuses []string) (or
 	`
 
 	for i := 0; i < len(statuses); i++ {
-		q += fmt.Sprintf("status = $%d", i+1)
+		q += fmt.Sprintf("status = $%d ", i+1)
 		if i != len(statuses)-1 {
-			q += " OR "
+			q += "OR "
 		}
 	}
+
+	q += "ORDER BY uploaded_at ASC"
 
 	converted := func() []any {
 		res := make([]any, 0, len(statuses))
